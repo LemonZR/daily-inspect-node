@@ -41,7 +41,7 @@ If Not found Then
 End If
 
 ' --- detached hidden launch via PowerShell, same core as the .bat version ---
-psScript = here & "\launch_hidden.ps1"
+psScript = here & "\scripts\launch_hidden.ps1"
 cmdLine = "powershell -NoProfile -ExecutionPolicy Bypass -File """ & psScript & _
           """ -Server """ & here & "\server.js"" -LogFile """ & logFile & """"
 ws.Run cmdLine, 0, False

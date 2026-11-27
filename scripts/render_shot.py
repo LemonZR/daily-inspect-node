@@ -8,7 +8,7 @@
 按实际字符宽度累加坐标, 保留 ANSI 颜色与背景色块。
 
 用法:
-  python render_shot.py --jobs <jobs.json>
+  python scripts/render_shot.py --jobs <jobs.json>
 
 jobs.json:
 {

@@ -73,7 +73,7 @@ chmod +x install.sh start.sh
 
 后台方式停止：双击 `stop_background.vbs`（只结束本目录的 node，不影响其它 Node 程序）。
 
-> `launch_hidden.ps1` 与 `_hidden_worker.cmd` 是后台启动的内部辅助脚本，由上面两个后台入口自动调用，**不需要也不建议手动运行**。其中 PowerShell 负责以隐藏窗口方式分离启动进程，`.cmd` 负责实际执行 `node server.js` 并把输出追加到 `logs/server.log`。
+> `scripts/launch_hidden.ps1` 与 `scripts/_hidden_worker.cmd` 是后台启动的内部辅助脚本，由上面两个后台入口自动调用，**不需要也不建议手动运行**。其中 PowerShell 负责以隐藏窗口方式分离启动进程，`.cmd` 负责实际执行 `node server.js` 并把输出追加到 `logs/server.log`。
 
 ### 首次启动后的初始化
 
@@ -88,14 +88,16 @@ chmod +x install.sh start.sh
 ```
 daily-inspect-node/
 ├── server.js                  中心服务（Node 标准库，零依赖）
-├── render_shot.py             截图渲染器（pyte + Pillow）
-├── index_evidence.py          SQLite 目录索引（建库/写入/统计/全量重建）
-├── zip_evidence.py            归档打包工具
 ├── requirements.txt           Python 截图依赖清单
 ├── install.sh / install.bat   一键安装依赖（Linux / Windows）
 ├── start.sh / start.bat       启动脚本（Linux / Windows）
-├── launch_hidden.ps1          后台启动内部辅助（被 start_background.vbs/.bat 调用）
-├── _hidden_worker.cmd         后台启动内部辅助（被 launch_hidden.ps1 调用）
+├── scripts/                   内部工具（使用人无需直接运行）
+│   ├── render_shot.py         截图渲染器（pyte + Pillow）
+│   ├── index_evidence.py      SQLite 目录索引（建库/写入/统计/全量重建）
+│   ├── zip_evidence.py        归档打包工具
+│   ├── launch_hidden.ps1      后台启动内部辅助（被 start_background.vbs/.bat 调用）
+│   ├── _hidden_worker.cmd     后台启动内部辅助（被 launch_hidden.ps1 调用）
+│   └── fix_console_font.ps1   控制台字体修正（start.bat 自动调用）
 ├── config/
 │   ├── config.example.json    配置模板（入库）
 │   └── config.json            实际配置（自动生成，不入库）

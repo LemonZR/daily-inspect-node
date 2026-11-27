@@ -26,8 +26,8 @@ if errorlevel 1 (
 
 rem Optional: switch this console to a TrueType font so Chinese logs render.
 rem Safe to fail - errors are suppressed.
-if exist "%~dp0fix_console_font.ps1" (
-  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix_console_font.ps1" >nul 2>&1
+if exist "%~dp0scripts\fix_console_font.ps1" (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\fix_console_font.ps1" >nul 2>&1
 )
 
 for /f "tokens=*" %%v in ('node -v') do set NODEVER=%%v

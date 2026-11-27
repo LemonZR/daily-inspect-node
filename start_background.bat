@@ -28,7 +28,7 @@ if errorlevel 1 (
 
 echo Starting inspection center in background (detached)...
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0launch_hidden.ps1" -Server "%CD%\server.js" -LogFile "%CD%\logs\server.log"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\launch_hidden.ps1" -Server "%CD%\server.js" -LogFile "%CD%\logs\server.log"
 if errorlevel 1 (
   echo [ERROR] Failed to launch. See messages above.
   pause

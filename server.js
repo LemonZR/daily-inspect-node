@@ -1794,7 +1794,7 @@ function buildArchiveZip(key, batch, col) {
   const specPath = path.join(ZIP_DIR, '_job_' + process.pid + '_' + Date.now().toString(36) + '.json');
   try {
     atomicWrite(specPath, JSON.stringify({ out: out, files: col.files, texts: col.texts }));
-    const o = execFileSync(py, [path.join(ROOT, 'zip_evidence.py'), '--jobs', specPath],
+    const o = execFileSync(py, [path.join(ROOT, 'scripts', 'zip_evidence.py'), '--jobs', specPath],
       { encoding: 'utf8', timeout: 180000, stdio: ['ignore', 'pipe', 'ignore'] });
     const r = JSON.parse(String(o).trim().split('\n').slice(-1)[0]);
     if (!r.ok) return null;
@@ -1850,7 +1850,7 @@ function detectPython() {
   pyCache = null; return null;
 }
 // 巡检归档完成后, 把本批次元数据写入 SQLite 索引(evidence/index.db)。
-// 索引失败绝不影响留证: 原始文件已落盘, 可用 index_evidence.py --rebuild 重建。
+// 索引失败绝不影响留证: 原始文件已落盘, 可用 scripts/index_evidence.py --rebuild 重建。
 function updateIndex(runDir, summary, shotRows) {
   let spec = null;
   let specPath = null;
@@ -1881,7 +1881,7 @@ function updateIndex(runDir, summary, shotRows) {
     specPath = path.join(runDir, '_index_spec.json');
     atomicWrite(specPath, JSON.stringify(spec));
     const dbPath = path.join(EVIDENCE_DIR, 'index.db');
-    const out = execFileSync(py, [path.join(ROOT, 'index_evidence.py'), '--db', dbPath, '--upsert-run', specPath],
+    const out = execFileSync(py, [path.join(ROOT, 'scripts', 'index_evidence.py'), '--db', dbPath, '--upsert-run', specPath],
       { encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] });
     try { fs.unlinkSync(specPath); } catch (e) {}
     console.log('[index] sqlite 索引已更新: ' + String(out).trim());
@@ -2022,7 +2022,7 @@ function renderScreenshots(runDir, shotRows, started) {
   fs.writeFileSync(jobsPath, JSON.stringify(spec, null, 2), 'utf8');
   let result = { enabled: true, ok: 0, failed: 0 };
   try {
-    const out = execFileSync(py, [path.join(ROOT, 'render_shot.py'), '--jobs', jobsPath],
+    const out = execFileSync(py, [path.join(ROOT, 'scripts', 'render_shot.py'), '--jobs', jobsPath],
       { encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024, env: pythonEnv(py) });
     result = JSON.parse(String(out).trim().split('\n').slice(-1)[0]);
   } catch (e) {
@@ -2098,7 +2098,7 @@ function reshootDayInner(dayKey) {
     const pngFiles = jobs.map(function (j) { return j.png_file; });
     chattrBatch(pngFiles, false, { force: true });
     const relock = function () { chattrBatch(pngFiles, true); };
-    const child = spawn(py, [path.join(ROOT, 'render_shot.py'), '--jobs', jobsPath],
+    const child = spawn(py, [path.join(ROOT, 'scripts', 'render_shot.py'), '--jobs', jobsPath],
       { env: pythonEnv(py), stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '', errTxt = '';
     child.stdout.on('data', function (d) { out += d; });
@@ -2863,7 +2863,7 @@ function handleApi(req, res, parsed) {
       const py = detectPython();
       if (py) {
         try {
-          const o = execFileSync(py, [path.join(ROOT, 'index_evidence.py'), '--db', dbPath, '--stats'],
+          const o = execFileSync(py, [path.join(ROOT, 'scripts', 'index_evidence.py'), '--db', dbPath, '--stats'],
             { encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] });
           const s = JSON.parse(String(o).trim().split('\n').slice(-1)[0]);
           idx.runs = s.runs; idx.commands = s.commands; idx.failed = s.failed;
@@ -2954,7 +2954,7 @@ function handleApi(req, res, parsed) {
     try {
       const dbPath = path.join(EVIDENCE_DIR, 'index.db');
       try { fs.unlinkSync(dbPath); } catch (e) {}
-      const out = execFileSync(py, [path.join(ROOT, 'index_evidence.py'), '--db', dbPath, '--rebuild', EVIDENCE_DIR],
+      const out = execFileSync(py, [path.join(ROOT, 'scripts', 'index_evidence.py'), '--db', dbPath, '--rebuild', EVIDENCE_DIR],
         { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
       return sendJSON(res, 200, { ok: true, result: JSON.parse(String(out).trim().split('\n').slice(-1)[0]) });
     } catch (e) { return sendJSON(res, 200, { ok: false, error: e.message }); }
@@ -3034,7 +3034,7 @@ function handleApi(req, res, parsed) {
           }]
         };
         fs.writeFileSync(jobsPath, JSON.stringify(spec), 'utf8');
-        execFileSync(py, [path.join(ROOT, 'render_shot.py'), '--jobs', jobsPath],
+        execFileSync(py, [path.join(ROOT, 'scripts', 'render_shot.py'), '--jobs', jobsPath],
           { encoding: 'utf8', timeout: 60000, maxBuffer: 8 * 1024 * 1024, env: pythonEnv(py) });
         if (!fs.existsSync(pngPath)) throw new Error('渲染未产出 PNG');
         const buf = fs.readFileSync(pngPath);

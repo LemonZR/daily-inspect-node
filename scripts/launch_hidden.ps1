@@ -1,6 +1,6 @@
 # ============================================================================
 #  launch_hidden.ps1  -  Start server.js in a detached, hidden process.
-#  Called by start_background.bat. Works on Win7 PowerShell 2.0.
+#  Called by start_background.bat/.vbs (from scripts/). Works on Win7 PowerShell 2.0.
 #  Pure ASCII on purpose.
 #  Params:
 #    -Server  full path to server.js

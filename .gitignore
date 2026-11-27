@@ -1,0 +1,28 @@
+# ===== 运行时配置与凭据（首次启动自动生成，绝不入库）=====
+config/config.json
+config/config.json.bak
+config/auth.json
+config/secret.key
+config/INITIAL_PASSWORD.txt
+
+# 允许示例模板入库
+!config/config.example.json
+
+# ===== 运行时数据：采集结果 / 归档留证 / 日志（含真实主机信息，绝不入库）=====
+data/*
+!data/.gitkeep
+evidence/*
+!evidence/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# ===== 离线二进制依赖包（体积大且含平台二进制，按需自行下载，不入库）=====
+vendor/
+lib/
+
+# ===== 系统与编辑器杂项 =====
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+node_modules/

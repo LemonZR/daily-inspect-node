@@ -1,0 +1,12 @@
+{
+  "name": "daily-inspect-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "服务器信息采集与留证管理系统 (Node 中心端 + 原生前端, 兼容 Node 18, Win7 可用)",
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

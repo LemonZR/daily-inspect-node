@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每日巡检留证中心</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo"><svg class="ico logo-ico" aria-hidden="true"><use href="icons.svg#monitor" xlink:href="icons.svg#monitor"></use></svg></span>
+      <h1>每日巡检留证中心</h1>
+    </div>
+    <div class="top-actions">
+      <span id="connStatus" class="status-pill">加载中…</span>
+      <button id="btnRunNow" class="btn ghost"><svg class="ico" aria-hidden="true"><use href="icons.svg#bolt" xlink:href="icons.svg#bolt"></use></svg> 立即巡检</button>
+      <button id="btnRefreshNow" class="btn ghost" title="只重新读取已采集的状态（不触发巡检）；数据没变化页面就不会变。要采新数据请点「立即巡检」"><svg class="ico" aria-hidden="true"><use href="icons.svg#refresh" xlink:href="icons.svg#refresh"></use></svg> 刷新</button>
+      <button id="btnLogout" class="btn ghost" title="退出登录">↪ 退出</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <!-- ========== 最左: 深色主菜单 ========== -->
+    <nav class="mainnav-side" id="mainNav">
+      <button class="mnav active" data-view="live"><span class="mico"><svg class="ico" aria-hidden="true"><use href="icons.svg#chart" xlink:href="icons.svg#chart"></use></svg></span><span class="mlabel">实时看板</span></button>
+      <button class="mnav" data-view="schedule"><span class="mico"><svg class="ico" aria-hidden="true"><use href="icons.svg#clock" xlink:href="icons.svg#clock"></use></svg></span><span class="mlabel">定时任务</span></button>
+      <button class="mnav" data-view="evidence"><span class="mico"><svg class="ico" aria-hidden="true"><use href="icons.svg#folder" xlink:href="icons.svg#folder"></use></svg></span><span class="mlabel">归档留证</span></button>
+      <button class="mnav" id="navManage" data-view="manage" title="服务器/命令/定时任务/告警/全局设置与账号设置（仅管理员）"><span class="mico"><svg class="ico" aria-hidden="true"><use href="icons.svg#gear" xlink:href="icons.svg#gear"></use></svg></span><span class="mlabel">配置管理</span></button>
+    </nav>
+
+    <div class="workspace">
+      <!-- ========== 实时看板 ========== -->
+      <section id="view-live" class="view">
+        <div class="view-shell">
+          <nav id="tabBar" class="side-submenu cmd-submenu"></nav>
+          <div class="view-body">
+            <div id="alertBar" class="alert-bar"></div>
+            <main id="content" class="content"><div class="placeholder">加载中…</div></main>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 定时任务 ========== -->
+      <section id="view-schedule" class="view" hidden>
+        <div class="view-shell">
+          <aside class="side-submenu sched-state-panel">
+            <div class="submenu-title">定时任务状态</div>
+            <div id="schedStatus" class="sched-status">加载中…</div>
+          </aside>
+          <div class="view-body">
+            <section class="panel sched-history-panel">
+              <div class="panel-head"><h2>执行历史</h2></div>
+              <div id="schedHistory" class="history-list pane-scroll">加载中…</div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 归档留证 ========== -->
+      <section id="view-evidence" class="view" hidden>
+        <div class="view-shell">
+          <nav class="side-submenu ev-side" id="evSide">
+            <div class="submenu-title">归档留证</div>
+            <button class="ev-nav active" data-ev="health"><span class="ev-ico"><svg class="ico" aria-hidden="true"><use href="icons.svg#heart" xlink:href="icons.svg#heart"></use></svg></span><span>存储健康</span></button>
+            <button class="ev-nav" data-ev="search"><span class="ev-ico"><svg class="ico" aria-hidden="true"><use href="icons.svg#search" xlink:href="icons.svg#search"></use></svg></span><span>历史检索</span></button>
+            <button class="ev-nav" data-ev="archive"><span class="ev-ico"><svg class="ico" aria-hidden="true"><use href="icons.svg#folder" xlink:href="icons.svg#folder"></use></svg></span><span>归档记录</span></button>
+          </nav>
+          <div class="view-body ev-body">
+            <section class="panel ev-pane" data-pane="health">
+          <div class="panel-head">
+            <h2>存储健康（每日运行必看）</h2>
+            <div>
+              <button class="btn small ghost" id="btnReindex" title="从归档文件全量重建 SQLite 索引，不改动原始留证"><svg class="ico" aria-hidden="true"><use href="icons.svg#wrench" xlink:href="icons.svg#wrench"></use></svg> 重建索引</button>
+              <button class="btn small ghost" id="btnRefreshHealth"><svg class="ico" aria-hidden="true"><use href="icons.svg#refresh" xlink:href="icons.svg#refresh"></use></svg> 刷新</button>
+            </div>
+          </div>
+          <div id="healthBox" class="health-box">加载中…</div>
+        </section>
+        <section class="panel ev-pane" data-pane="search" hidden>
+          <div class="panel-head"><h2>历史检索（SQLite 索引）</h2></div>
+          <div class="search-bar">
+            <input id="qKeyword" placeholder="命令 / 命令名 / 服务器名 关键字" />
+            <select id="qServer"><option value="">全部服务器</option></select>
+            <select id="qStatus"><option value="">全部状态</option><option value="ok">成功</option><option value="error">失败</option></select>
+            <input id="qFrom" placeholder="起始 YYYY-MM-DD" />
+            <input id="qTo" placeholder="结束 YYYY-MM-DD" />
+            <button class="btn primary small" id="btnSearch"><svg class="ico" aria-hidden="true"><use href="icons.svg#search" xlink:href="icons.svg#search"></use></svg> 检索</button>
+          </div>
+          <div id="searchResult" class="search-result"><div class="hint">输入条件后点「检索」，可按服务器 / 状态 / 日期 / 命令关键字查历史留证，最多返回 500 条；命中结果可直接打开对应批次的原生样式截图。</div></div>
+        </section>
+        <section class="panel ev-pane" data-pane="archive" hidden>
+          <div class="panel-head">
+            <h2>归档记录（按天 → 批次 → 服务器）</h2>
+            <div>
+              <span class="lock-all-wrap" id="lockAllWrap" hidden><span class="lock-all-label">全部留证</span><span class="lock-toggle" id="btnLockAllToggle" title="点击切换全部归档的上锁/解锁"></span></span>
+              <button class="btn small ghost" id="btnRefreshEvidence"><svg class="ico" aria-hidden="true"><use href="icons.svg#refresh" xlink:href="icons.svg#refresh"></use></svg> 刷新</button>
+            </div>
+          </div>
+          <div class="ev-filter">
+            <label>起始 <input type="date" id="evFrom"></label>
+            <label>结束 <input type="date" id="evTo"></label>
+            <button class="btn small ghost" id="btnEvClear">清除筛选</button>
+            <span class="hint" id="evFilterStat" style="margin:0"></span>
+          </div>
+            <div id="evidenceList" class="evidence-list">加载中…</div>
+          </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 配置管理(侧边栏视图, 固定两栏不跳动) ========== -->
+      <section id="view-manage" class="view" hidden>
+        <div class="view-shell">
+          <nav class="side-submenu mgmt-submenu" id="mgmtNav">
+            <div class="submenu-title">配置管理</div>
+            <button class="mtab active" data-mt="servers">目标服务器</button>
+            <button class="mtab" data-mt="commands">命令清单</button>
+            <button class="mtab" data-mt="schedule">定时任务</button>
+            <button class="mtab" data-mt="alerts">告警配置</button>
+            <button class="mtab" data-mt="settings">全局设置</button>
+            <button class="mtab" data-mt="account">账号设置</button>
+          </nav>
+          <div class="view-body mgmt-body">
+            <div id="mgmtPanes">
+        <!-- 服务器 -->
+        <section class="mpane" data-pane="servers">
+          <div class="pane-addbar"><button class="btn small" id="btnAddServer">＋ 新增服务器</button></div>
+          <p class="hint">每台服务器可分配「不同的命令」——在卡片里勾选该机要执行的命令。采集方式支持 SSH(密钥/密码)、本机、模拟。登录密码加密落盘、页面不回显：留空表示沿用已存密码，输入新值即替换。</p>
+          <div id="serverList"></div>
+        </section>
+        <!-- 命令清单 -->
+        <section class="mpane" data-pane="commands" hidden>
+          <div class="pane-addbar"><button class="btn small" id="btnAddCommand">＋ 新增命令</button></div>
+          <p class="hint">全局命令清单。每条命令的原始终端输出即留证内容；实时看板的大数值由程序按命令自动识别，无需配置。脚本不内置命令，全部以此清单为准。新增后会自动定位并聚焦到新卡片，可连续添加。</p>
+          <div id="commandList"></div>
+        </section>
+        <!-- 定时任务 -->
+        <section class="mpane" data-pane="schedule" hidden>
+          <p class="hint">选择「每日定点」则每天在指定时刻执行一次；选择「固定间隔」则每隔 N 分钟执行一次。归档含每台机每条命令的原始输出、清单与 SHA256 校验。</p>
+          <div class="form-grid">
+            <label>启用定时任务
+              <select id="schEnabled"><option value="true">启用</option><option value="false">停用</option></select>
+            </label>
+            <label>调度模式
+              <select id="schMode"><option value="daily">每日定点</option><option value="interval">固定间隔</option></select>
+            </label>
+            <label id="schTimeRow">每日执行时间 (HH:MM)<input id="schTime" placeholder="02:00" /></label>
+            <label id="schIntervalRow" hidden>间隔分钟<input id="schInterval" type="number" min="1" placeholder="60" /></label>
+          </div>
+          <label class="chk"><input type="checkbox" id="schRunOnStart" /> 服务启动时立即执行一次</label>
+        </section>
+        <!-- 告警配置 -->
+        <section class="mpane" data-pane="alerts" hidden>
+          <p class="hint">告警只影响<b>实时看板</b>的告警条与卡片颜色，不改变采集与归档留证。程序按命令内容自动识别 CPU（mpstat）、内存（free）、磁盘（df）指标并取使用率百分比；可总开关，也可分别停掉某个指标或调整两级阈值。</p>
+          <div class="form-grid">
+            <label>告警总开关
+              <select id="alEnabled"><option value="true">开启</option><option value="false">关闭（不产生任何告警）</option></select>
+            </label>
+          </div>
+          <table class="alert-cfg-table">
+            <thead><tr><th>指标</th><th>启用</th><th>警告阈值 ≥ %</th><th>严重阈值 ≥ %</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>CPU 使用率</b><span class="s">mpstat</span></td>
+                <td><select id="alCpuOn"><option value="true">启用</option><option value="false">停用</option></select></td>
+                <td><input id="alCpuWarn" type="number" min="0" max="100" /></td>
+                <td><input id="alCpuCrit" type="number" min="0" max="100" /></td>
+              </tr>
+              <tr>
+                <td><b>内存使用率</b><span class="s">free</span></td>
+                <td><select id="alMemOn"><option value="true">启用</option><option value="false">停用</option></select></td>
+                <td><input id="alMemWarn" type="number" min="0" max="100" /></td>
+                <td><input id="alMemCrit" type="number" min="0" max="100" /></td>
+              </tr>
+              <tr>
+                <td><b>磁盘使用率</b><span class="s">df</span></td>
+                <td><select id="alDiskOn"><option value="true">启用</option><option value="false">停用</option></select></td>
+                <td><input id="alDiskWarn" type="number" min="0" max="100" /></td>
+                <td><input id="alDiskCrit" type="number" min="0" max="100" /></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="alert-ignore">
+            <p class="hint" style="margin:10px 0 6px"><b>磁盘 df 忽略项</b>：命中的挂载行不参与「最大值」告警，终端原文与归档留证照常保留。留空即不忽略任何行。</p>
+            <div class="form-grid">
+              <label>忽略的文件系统（逗号分隔）<input id="alDiskIgnoreFs" placeholder="tmpfs,overlay,devtmpfs" /></label>
+              <label>忽略的挂载点前缀（逗号分隔）<input id="alDiskIgnoreMounts" placeholder="/dev/shm,/run,/sys/fs/cgroup" /></label>
+            </div>
+          </div>
+          <p class="hint" style="margin-top:10px">阈值填 0–100 的整数；「严重」需大于「警告」，否则保存时自动纠正为 警告+1。停用的指标不产生告警，但数值照常显示在卡片上。</p>
+        </section>
+        <!-- 全局设置 -->
+        <section class="mpane" data-pane="settings" hidden>
+          <div class="form-grid">
+            <label>实时轮询间隔 (ms，0=关闭)<input id="setPoll" type="number" min="0" step="1000" title="默认 86400000(1天)；填 0 则完全不自动轮询，只靠下面的定时任务采集" /></label>
+            <label>页面自动刷新间隔 (ms，0=关闭)<input id="setUiRefresh" type="number" min="0" step="1000" title="只控制页面重绘，不改变后端采集；0=不自动刷新，用顶部「刷新」按钮手动更新。小于1000按1000处理" /></label>
+            <label>历史点上限 (单命令)<input id="setHistory" type="number" min="100" /></label>
+            <label>执行历史保留条数<input id="setHistoryRuns" type="number" min="1" step="100" title="默认 2000 条；按每天定时巡检 1 次约合 5 年。归档截图不受此值影响，按下面的保留天数留存" /></label>
+            <label>归档保留天数 (0=永久)<input id="setRetain" type="number" min="0" /></label>
+            <label id="immutableRow">归档日志自动上锁
+              <select id="setImmutable" title="仅 Linux 中心机有效：每次巡检归档后自动对 .txt/.ansi/.png 加不可变标记防止误删；Windows 自动跳过。清单/汇总不锁，重出截图时会自动临时解锁。">
+                <option value="true">开启</option><option value="false">关闭</option>
+              </select>
+            </label>
+            <label>请求 TTY (保留原生提示符/颜色)
+              <select id="setTty"><option value="true">开启</option><option value="false">关闭</option></select>
+            </label>
+          </div>
+          <p class="hint" style="margin-top:10px"><b>自动截图</b>：定时巡检时用本机 Python+Pillow 把每条命令渲染成原生样式的 PNG，与 .txt / .ansi 一起平铺在「服务器名称」目录下，文件名自带服务器名称与命令名称。需中心机安装 pyte 与 Pillow。</p>
+          <div class="form-grid">
+            <label>自动生成截图
+              <select id="setShot"><option value="true">开启</option><option value="false">关闭</option></select>
+            </label>
+            <label>截图主题
+              <select id="setShotTheme"><option value="dark">深色(终端黑底)</option><option value="light">浅色</option></select>
+            </label>
+            <label>字号 (px)<input id="setShotFont" type="number" min="10" max="24" /></label>
+            <label>截图终端列宽 (固定画面宽度,长行折行)<input id="setCols" type="number" min="80" max="300" /></label>
+            <label>截图最大行数 (超长只留末尾)<input id="setLines" type="number" min="24" max="200" /></label>
+            <label>远端终端列数 (防长行折行)<input id="setRemoteCols" type="number" min="80" max="1000" /></label>
+            <label>远端终端行数<input id="setRemoteLines" type="number" min="24" max="500" /></label>
+            <label>SQLite 索引
+              <select id="setSqlite"><option value="true">开启</option><option value="false">关闭</option></select>
+            </label>
+            <label>等宽字体文件 (auto=自动)<input id="setFontPath" placeholder="auto 或 C:/Windows/Fonts/consola.ttf" /></label>
+            <label>中文字体文件 (auto=自动)<input id="setCjkFontPath" placeholder="auto 或 C:/Windows/Fonts/simsun.ttc" /></label>
+            <label>Python 路径 (空白=自动)<input id="setPythonExe" placeholder="python / python3 / ./venv/bin/python" /></label>
+          </div>
+        </section>
+        <!-- 账号设置 -->
+        <section class="mpane" data-pane="account" hidden>
+          <div class="acct-grid">
+            <div class="acct-card">
+              <h3>修改管理员密码</h3>
+              <p class="hint">管理员可查看和修改全部配置。修改后初始密码文件会自动清理。</p>
+              <label>原密码<input id="pwOld" type="password" autocomplete="current-password" /></label>
+              <label>新密码（至少 6 位）<input id="pwNew" type="password" autocomplete="new-password" /></label>
+              <label>确认新密码<input id="pwNew2" type="password" autocomplete="new-password" /></label>
+              <p id="pwMsg" class="hint acct-msg"></p>
+              <button class="btn primary" id="btnSavePw">保存管理员新密码</button>
+            </div>
+            <div class="acct-card">
+              <h3>设置查看用户密码</h3>
+              <p class="hint">查看用户名固定为 <code>viewer</code>。可看板、看归档、下载、重出截图、刷新、重建索引；<b>不能进「配置管理」（含改密），也不能点「立即巡检」</b>。</p>
+              <label>新密码（至少 6 位）<input id="vwNew" type="password" autocomplete="new-password" /></label>
+              <label>确认新密码<input id="vwNew2" type="password" autocomplete="new-password" /></label>
+              <p id="vwMsg" class="hint acct-msg"></p>
+              <button class="btn primary" id="btnSaveViewerPw">保存查看用户密码</button>
+            </div>
+          </div>
+        </section>
+            </div>
+            <div class="mgmt-savebar">
+              <button class="btn primary" id="btnSaveConfig">保存配置并应用</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 截图/详情预览弹窗 -->
+  <div id="detailModal" class="modal" hidden>
+    <div class="modal-box wide">
+      <div class="modal-head">
+        <h2 id="detailTitle">终端画面</h2>
+        <div>
+          <button class="btn small" id="btnDownloadShot">↓ 下载 PNG</button>
+          <button class="btn ghost" id="btnCloseDetail">✕ 关闭</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <pre id="detailTerminal" class="term bigterm"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "_说明": "配置模板。首次启动时程序会自动生成 config.json（内容与本模板相近），无需手动复制。若要从模板起步，把本文件复制为 config.json 后再改。SSH 密码请留空，登录后到管理界面填写；切勿把真实口令写进本文件并提交到仓库。",
+  "listenPort": 8082,
+  "settings": {
+    "pollIntervalMs": 86400000,
+    "uiRefreshMs": 0,
+    "historyMaxPoints": 2000,
+    "historyMaxRuns": 2000,
+    "requestTTY": true,
+    "retainDays": 0,
+    "evidenceImmutable": true,
+    "shotEnabled": true,
+    "shotFontPath": "auto",
+    "shotCjkFontPath": "auto",
+    "shotFontSize": 14,
+    "shotTheme": "dark",
+    "terminalCols": 132,
+    "terminalLines": 80,
+    "remoteCols": 300,
+    "remoteLines": 60,
+    "sqliteIndex": true,
+    "pythonExe": ""
+  },
+  "alerts": {
+    "enabled": true,
+    "cpu": { "enabled": true, "warning": 80, "critical": 90 },
+    "mem": { "enabled": true, "warning": 85, "critical": 95 },
+    "disk": {
+      "enabled": true,
+      "warning": 85,
+      "critical": 95,
+      "ignoreFs": ["tmpfs", "devtmpfs", "ramfs", "rootfs", "overlay", "overlayfs"],
+      "ignoreMounts": ["/dev/shm", "/run", "/sys/fs/cgroup", "/proc", "/sys"]
+    }
+  },
+  "schedule": {
+    "enabled": false,
+    "mode": "daily",
+    "time": "02:00",
+    "intervalMinutes": 60,
+    "runOnStart": false
+  },
+  "servers": [
+    {
+      "id": "demo",
+      "name": "演示节点(模拟器)",
+      "host": "demo",
+      "group": "演示",
+      "enabled": true,
+      "timeoutMs": 30000,
+      "commandIds": ["hostname", "cpu_avg", "mem", "disk", "sysinfo"],
+      "ssh": { "mode": "demo", "auth": "key", "user": "root", "port": 22, "keyFile": "", "password": "" }
+    }
+  ],
+  "commands": [
+    { "id": "hostname", "name": "主机与时间", "command": "hostname; date '+%F %T %Z'", "timeoutMs": 10000, "enabled": true },
+    { "id": "uptime", "name": "运行时长与负载", "command": "uptime", "timeoutMs": 10000, "enabled": true },
+    { "id": "cpu_avg", "name": "CPU平均时间", "command": "mpstat -P ALL 1 1", "timeoutMs": 15000, "enabled": true },
+    { "id": "mem", "name": "内存使用情况", "command": "free -b", "timeoutMs": 10000, "enabled": true },
+    { "id": "disk", "name": "磁盘空间使用情况", "command": "df -P -B1", "timeoutMs": 10000, "enabled": true },
+    { "id": "sysinfo", "name": "系统版本信息", "command": "cat /etc/os-release; uname -a", "timeoutMs": 10000, "enabled": true },
+    { "id": "listening_ports", "name": "监听端口", "command": "ss -lntup", "timeoutMs": 10000, "enabled": true }
+  ]
+}
